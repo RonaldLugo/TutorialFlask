@@ -4,6 +4,7 @@ from .modelos import AlbumSchema, CancionSchema, UsuarioSchema
 from flask_restful import Api 
 from .vistas import VistaCanciones, VistaCancion, VistaUsuarios, VistaUsuario, \
                     VistaAlbumes, VistaAlbum
+from flask_jwt_extended import JWTManager
 
 app = create_app('default')
 app_context = app.app_context()
@@ -64,3 +65,4 @@ with app.app_context():
   api.add_resource(VistaAlbumes, '/albumes')
   api.add_resource(VistaAlbum, '/album/<int:id_album>')
   
+  jwt = JWTManager(app)

@@ -1,6 +1,7 @@
 from flask_restful import Resource
 from ..modelos import db, Cancion, Usuario, Album, CancionSchema, UsuarioSchema, AlbumSchema
 from flask import request 
+from flask_jwt_extended import jwt_required, create_access_token
 
 cancion_schema = CancionSchema()
 usuario_schema = UsuarioSchema()
@@ -48,15 +49,18 @@ class VistaUsuarios(Resource):
   def post(self):
     nuevo_usuario = Usuario(nombre_usuario=request.json['nombre_usuario'], \
                             contrasena=request.json['contrasena'])
+    token_de_acceso = create_access_token(identity=request.json['nombre_usuario'])
     db.session.add(nuevo_usuario)
     db.session.commit()
-    return usuario_schema.dump(nuevo_usuario)
+    return {'mensaje':'usuario creado exitosamente', 'token de acceso': token_de_acceso}
   
 class VistaUsuario(Resource):
   
+  @jwt_required()
   def get(self, id_usuario):
     return usuario_schema.dump(Usuario.query.get_or_404(id_usuario))
   
+  @jwt_required()
   def put(self, id_usuario):
     usuario = Usuario.query.get_or_404(id_usuario)
     usuario.nombre_usuario = request.json.get('nombre_usuario', usuario.nombre_usuario)
@@ -64,6 +68,7 @@ class VistaUsuario(Resource):
     db.session.commit() 
     return usuario_schema.dump(usuario)
   
+  @jwt_required()
   def delete(self, id_usuario):
     usuario = Usuario.query.get_or_404(id_usuario)
     db.session.delete(usuario)
