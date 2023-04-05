@@ -2,6 +2,14 @@ from flask_restful import Resource
 from ..modelos import db, Cancion, Usuario, Album, CancionSchema, UsuarioSchema, AlbumSchema
 from flask import request 
 from flask_jwt_extended import jwt_required, create_access_token
+from datetime import datetime 
+from celery import Celery
+
+celery_app = Celery(__name__, broker='redis://localhost:6379/0')
+
+@celery_app.task(name='registrar_log')
+def registrar_log(*args):
+  pass
 
 cancion_schema = CancionSchema()
 usuario_schema = UsuarioSchema()
@@ -52,6 +60,9 @@ class VistaUsuarios(Resource):
     token_de_acceso = create_access_token(identity=request.json['nombre_usuario'])
     db.session.add(nuevo_usuario)
     db.session.commit()
+    args = (nuevo_usuario.nombre_usuario, datetime.utcnow())
+    registrar_log.apply_async(args=args, queue='logs')
+    #registrar_log.delay(nuevo_usuario.nombre_usuario, datetime.utcnow())
     return {'mensaje':'usuario creado exitosamente', 'token de acceso': token_de_acceso}
   
 class VistaUsuario(Resource):
